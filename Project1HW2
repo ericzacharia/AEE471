@@ -9,7 +9,8 @@ clc
 
 FSyield             = 1.25;                  %Yield Factor of Safety
 FSultimate          = 1.5;                   %Ultimate Design Factor of Safety
-k                       = .669
+k                   = .669;
+
 %% Member Limit Loads
 AC_limit            = 73021;                 %lbf (Tension)
 CD_limit            = AC_limit;              %lbf (Tension)
@@ -17,6 +18,7 @@ AB_limit            = 111449;                %lbf (Compression)
 DE_limit            = AB_limit;              %lbf (Compression)
 BC_limit            = 190329;                %lbf (Compression)
 CE_limit            = BC_limit;              %lbf (Compression)
+
 %% Member Yield Loads
 AC_yield            = AC_limit*FSyield;      %lbf (Tension)
 CD_yield            = AC_yield;              %lbf (Tension)
@@ -24,6 +26,7 @@ AB_yield            = AB_limit*FSyield;      %lbf (Compression)
 DE_yield            = AB_yield;              %lbf (Compression)
 BC_yield            = BC_limit*FSyield;      %lbf (Compression)
 CE_yield            = BC_yield;              %lbf (Compression)
+
 %% Member Ultimate Design Loads
 AC_ultimate         = AC_limit*FSultimate;   %lbf (Tension)
 CD_ultimate         = AC_ultimate;           %lbf (Tension)
@@ -31,6 +34,7 @@ AB_ultimate         = AB_limit*FSultimate;   %lbf (Compression)
 DE_ultimate         = AB_ultimate;           %lbf (Compression)
 BC_ultimate         = BC_limit*FSultimate;   %lbf (Compression)
 CE_ultimate         = BC_ultimate;           %lbf (Compression)
+
 %% Titanium Material Properties
 E_Ti                = 15.5E6;                %psi Young's Modulus 
 nu_Ti               = 0.33;                  % -  Poisson's Ratio
@@ -38,54 +42,52 @@ sigmayield_Ti       = 110E3;                 %psi Yield Stress
 sigmatens_Ti        = 115E3;                 %psi Ultimate Strength Tension
 sigmacomp_Ti        = 115E3;                 %psi Ultimate Strength Compression
 rho_Ti              = 0.162;                 %lbm/in^3
-%% Design of I-Beam: Members AC and CD in Tension
-Leff_ibeam             = 72.000;                                %in
-h_ibeam                = 4.0;                                   %in
-b_ibeam                = 2.0;                                   %in
-t_ibeam                = 0.150;                                 %in
-A_ibeam                = t_ibeam*(4*b_ibeam+h_ibeam-2*t_ibeam)  %in^2 
-% I_ibeam                = 2*((2*b_ibeam*t_ibeam^3)/12+(2*b_ibeam*t_ibeam+...
-%                         (h_ibeam/2-t_ibeam/2)^2)+(t_ibeam*(h_ibeam-2*...
-%                          t_ibeam)^3)/12)                        %in^4
-W_ibeam                = A_ibeam*Leff_ibeam*rho_Ti;             %lbm
-A_yield_ibeam          = AC_yield/sigmatens_Ti;                 %in^2 *same thing
-A_ultimate_ibeam       = AC_ultimate/sigmatens_Ti;              %in^2
-YieldStrength_ibeam    = sigmayield_Ti*A_ibeam                  %psi  *same thing
-UltimateStrength_ibeam = sigmatens_Ti*A_ibeam                   %psi
-MaxDeflection_ibeam    = (sigmatens_Ti*Leff_ibeam)/(E_Ti*A_ibeam)%in
-FS_YieldStrength_ibeam = 1.5*YieldStrength_ibeam
-FS_UltimateStrength_ibeam= 1.5*UltimateStrength_ibeam
-FS_MaxDeflectionForce_ibeam = 1.5*AC_ultimate
 
+%% Design of I-Beam: Members AC and CD in Tension 
+Leff_ibeam             = 72.000;                                  %in
+h_ibeam                = 4.0;                                     %in
+b_ibeam                = 2.0;                                     %in
+t_ibeam                = 0.150;                                   %in
+A_ibeam                = t_ibeam*(4*b_ibeam+h_ibeam-2*t_ibeam);   %in^2 
+I_ibeam                = 2*((2*b_ibeam*t_ibeam^3)/12+(2*b_ibeam*t_ibeam+...
+                        (h_ibeam/2-t_ibeam/2)^2))+(t_ibeam*(h_ibeam-2*...
+                         t_ibeam)^3)/12;                          %in^4
+W_ibeam                = A_ibeam*Leff_ibeam*rho_Ti;               %lbm
+A_yield_ibeam          = AC_yield/sigmatens_Ti;                   %in^2 *same thing
+A_ultimate_ibeam       = AC_ultimate/sigmatens_Ti;                %in^2
+YieldStrength_ibeam    = sigmayield_Ti*A_ibeam;                   %psi  *same thing
+UltimateStrength_ibeam = sigmatens_Ti*A_ibeam;                    %psi
+MaxDeflection_ibeam    = (sigmatens_Ti*Leff_ibeam)/(E_Ti*A_ibeam);%in
+
+FS_YieldStrength_ibeam      = 1.5*YieldStrength_ibeam;
+FS_UltimateStrength_ibeam   = 1.5*UltimateStrength_ibeam;
+FS_MaxDeflectionForce_ibeam = 1.5*AC_ultimate;
 %% Design of Circular Tube: Members AB and DE in Compression
-L_circle               = 201.207;                               %in
-Leff_circle            = L_circle*k;                            %in
-r_circle               = 3.95;                                  %in (t/2 negligible)
-t_circle               = 0.1;                                   %in
-A_circle               = 2*pi*r_circle*t_circle                 %in^2 *same thing
-I_circle               = pi*r_circle^3*t_circle                 %in^4
-W_circle               = A_circle*L_circle*rho_Ti               %lbm
-r_t_circle             = r_circle/t_circle                      % - to find gamma
-gamma_circle           = 0.72                                   % from r/t graph
+L_circle                = 201.207;                               %in
+Leff_circle             = L_circle*k;                            %in
+r_circle                = 3.95;                                  %in (t/2 negligible)
+t_circle                = 0.1;                                   %in
+A_circle                = 2*pi*r_circle*t_circle;                %in^2 *same thing
+I_circle                = pi*r_circle^3*t_circle;                %in^4
+W_circle                = A_circle*L_circle*rho_Ti;              %lbm
+r_t_circle              = r_circle/t_circle;                     % - to find gamma
+gamma_circle            = 0.72;                                  % from r/t graph
 
-z_circle               = (L_circle^2*sqrt(1-gamma_circle^2))/(r_circle*t_circle);
-kx_circle              = (4*sqrt(3)*gamma_circle*z_circle)/pi^2
-sigmaCR_circle         = ((kx_circle*pi^2*E_Ti)/(12*(1-nu_Ti^2)))*...
-                         (t_circle/L_circle)^2                  %psi
-GlobalBuckling_circle  = (pi^2*E_Ti*I_circle)/((k*Leff_circle)^2)
-CylindricalBuckling    = sigmaCR_circle*A_circle          
+z_circle                = (L_circle^2*sqrt(1-gamma_circle^2))/(r_circle*t_circle);
+kx_circle               = (4*sqrt(3)*gamma_circle*z_circle)/pi^2;
+sigmaCR_circle          = ((kx_circle*pi^2*E_Ti)/(12*(1-nu_Ti^2)))*...
+                         (t_circle/L_circle)^2;                  %psi
+GlobalBuckling_circle   = (pi^2*E_Ti*I_circle)/((k*Leff_circle)^2);
+CylindricalBuckling     = sigmaCR_circle*A_circle;               %psi        
+YieldStrength_circle    = sigmayield_Ti*A_circle;                %psi  
+UltimateStrength_circle = sigmacomp_Ti*A_circle;                 %psi
+MaxDeflection_circle    = (sigmacomp_Ti*Leff_circle)/(E_Ti*A_circle); %in
 
-
-
-YieldStrength_circle    = sigmayield_Ti*A_circle                    %psi  *same thing
-UltimateStrength_circle = sigmacomp_Ti*A_circle                     %psi
-MaxDeflection_circle    = (sigmacomp_Ti*Leff_circle)/(E_Ti*A_circle)%in
-FS_YieldStrength_circle = 1.5*YieldStrength_circle
-FS_UltimateStrength_circle= 1.5*UltimateStrength_circle
-FS_MaxDeflectionForce_circle = 1.5*AC_ultimate
-FS_GlobalBuckling_circle= 1.5*GlobalBuckling_circle
-FS_CylindricalBuckling  = 1.5*CylindricalBuckling
-
+FS_YieldStrength_circle      = 1.5*YieldStrength_circle;
+FS_UltimateStrength_circle   = 1.5*UltimateStrength_circle;
+FS_MaxDeflectionForce_circle = 1.5*AC_ultimate;
+FS_GlobalBuckling_circle     = 1.5*GlobalBuckling_circle;
+FS_CylindricalBuckling       = 1.5*CylindricalBuckling;
 
 %% Design of Box Tube: Members BC and CE in Compression
 L_box                 = 232.974;                                %in
@@ -93,34 +95,30 @@ Leff_box              = L_box*k;                                %in
 w_box                 = 7.0;                                    %in
 h_box                 = 7.0;                                    %in
 t_box                 = 0.25;                                   %in
-A_box                 = (w_box+h_box)*t_box*2                   %in^2
+A_box                 = (w_box+h_box)*t_box*2;                  %in^2
 I_box                 = ((w_box+t_box)*(h_box+t_box)^3-(w_box-t_box)*...
-                        (h_box-t_box)^3)/12                     %in^4
-W_box                 = A_box*L_box*rho_Ti                      %lbm
+                        (h_box-t_box)^3)/12;                    %in^4
+W_box                 = A_box*L_box*rho_Ti;                     %lbm
 kh_box                = 4;                                      %from Fig.C6.6
 sigmaCR_box           = ((kh_box*pi^2*E_Ti)/(12*(1-nu_Ti^2)))*...
                         (t_box/h_box)^2;                        %psi
-LocalBuckling_box     = sigmaCR_box*A_box                       %lbf                    
+LocalBuckling_box     = sigmaCR_box*A_box;                      %lbf                    
 g_box                 = 12;                                     %Number of Flanges
 Cripplingstress_box   = sigmayield_Ti*0.56*(((g_box*t_box^2)/A_box)...
-                        *sqrt(E_Ti/sigmayield_Ti))^0.85         %psi Crippling Stress
-CripplingLoad_box     = Cripplingstress_box*A_box               %lbf          
+                        *sqrt(E_Ti/sigmayield_Ti))^0.85;        %psi Crippling Stress
+CripplingLoad_box     = Cripplingstress_box*A_box;              %lbf          
 FcsMax_box            = 0.8*sigmayield_Ti;                      %psi Max Crippling Stress
-GlobalBuckling_box    = (pi^2*E_Ti*I_box)/((k*Leff_box)^2)
+GlobalBuckling_box    = (pi^2*E_Ti*I_box)/((k*Leff_box)^2);
+YieldStrength_box     = sigmayield_Ti*A_box;                    %psi  *same thing
+UltimateStrength_box  = sigmacomp_Ti*A_box;                     %psi
+MaxDeflection_box     = (sigmacomp_Ti*L_box)/(E_Ti*A_box);      %in
 
-YieldStrength_box    = sigmayield_Ti*A_box                      %psi  *same thing
-UltimateStrength_box = sigmacomp_Ti*A_box                       %psi
-MaxDeflection_box    = (sigmacomp_Ti*L_box)/(E_Ti*A_box)        %in
-FS_YieldStrength_box = 1.5*YieldStrength_box
-FS_UltimateStrength_box= 1.5*UltimateStrength_box
-FS_MaxDeflectionForce_box = 1.5*BC_ultimate
-FS_GlobalBuckling_box= 1.5*GlobalBuckling_box
-FS_LocalBuckling_box= 1.5*LocalBuckling_box
-FS_CripplingLoad_box= 1.5*CripplingLoad_box
-
-
-
-
+FS_YieldStrength_box      = 1.5*YieldStrength_box;
+FS_UltimateStrength_box   = 1.5*UltimateStrength_box;
+FS_MaxDeflectionForce_box = 1.5*BC_ultimate;
+FS_GlobalBuckling_box     = 1.5*GlobalBuckling_box;
+FS_LocalBuckling_box      = 1.5*LocalBuckling_box;
+FS_CripplingLoad_box      = 1.5*CripplingLoad_box
 
 %% Total Structure
 WeightTotal = (W_ibeam + W_circle + W_box)*2
