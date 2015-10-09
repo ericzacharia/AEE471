@@ -1,0 +1,125 @@
+%Eric Zacharia
+%Design and Analysis of Aerospace Structures - Project 1
+%Due October 9th, 2015
+clear all
+close all
+clc
+
+% The goal for this project is to acquire the lowest weight -> FS as possible.
+% i = I-beam
+% c = Circular tube
+% b = Box beam
+
+%% Member Limit Loads
+AClimit     = 73021;                                  %lbf (Tension)
+CDlimit     = AClimit;                                %lbf (Tension)
+ABlimit     = 111449;                                 %lbf (Compression)
+DElimit     = ABlimit;                                %lbf (Compression)
+BClimit     = 190329;                                 %lbf (Compression)
+CElimit     = BClimit;                                %lbf (Compression)
+
+%% Member Design Loads
+ACdesign    = AClimit*1.5;                            %lbf (Tension)
+CDdesign    = ACdesign;                               %lbf (Tension)
+ABdesign    = ABlimit*1.5;                            %lbf (Compression)
+DEdesign    = ABdesign;                               %lbf (Compression)
+BCdesign    = BClimit*1.5;                            %lbf (Compression)
+CEdesign    = BCdesign;                               %lbf (Compression)
+
+%% Titanium Material Properties
+ETi         = 15.5E6;                                 %psi Young's Modulus 
+nuTi        = 0.33;                                   % -  Poisson's Ratio
+SigysTi     = 110E3;                                  %psi Yield Stress
+SigutsTi    = 115E3;                                  %psi Ultimate Strength Tension
+SigucsTi    = 115E3;                                  %psi Ultimate Strength Compression
+rhoTi       = 0.162;                                  %lbm/in^3
+
+%% Boron Material Properties
+EB          = 29.6E6;                                 %psi Young's Modulus 
+SigutsB     = 183E3;                                  %psi Ultimate Strength Tension
+SigucsB     = 363E3;                                  %psi Ultimate Strength Compression
+rhoB        = 0.072;                                  %lbm/in^3
+
+%% Design of I-Beam: Members AC and CD in Tension: Made with Titanium
+Leffi       = 72                                      %in
+hi          = 3.57                                    %in
+bi          = 1.54                                    %in
+ti          = 0.10                                    %in
+Ai          = ti*(4*bi+hi-2*ti)                       %in^2 
+Ii          = 1/12*ti*(hi-2*ti)^3 + 2*(1/12*2*bi*...
+              ti^3 + 2*bi*ti*((hi-ti)/2)^2)           %in^4
+Wi          = Ai*Leffi*rhoTi                          %lbm
+SigMaxi     = AClimit/Ai + 0                          %psi Max Stress (No Bending)
+
+FSYieldi    = SigysTi/SigMaxi                         %FS Yield > 1.25
+FSUltimatei = SigutsTi/SigMaxi                        %FS Ultimate >1.5
+
+%% Design of Circular Tube: Members AB and DE in Compression
+Lc          = 201.207                                 %in
+kc          = 0.7;                                    %- Effective Length Constant
+Leffc       = Lc*kc;                                  %in
+rc          = 3.583                                   %in
+tc          = 0.10                                    %in
+Ac          = 4*pi*rc*tc                              %in^2 
+Ic          = pi/4*((rc+tc/2)^4-(rc-tc/2)^4)          %in^4
+Wc          = Ac*Lc*rhoTi                             %lbm
+SigMaxc     = ABlimit/Ac + 0                          %psi Max Stress (No Bending)
+r_tc        = rc/tc;                                  %- used to find gamma
+gammac      = .73                                     %from r/t graph
+zc          = (Lc^2*sqrt(1-nuTi^2))/(rc*tc);          %-
+kxc         = (4*sqrt(3)*gammac*zc)/pi^2              %-
+SigCRc      = kxc*pi^2*ETi/(12*(1-nuTi^2))*(tc/Lc)^2  %psi 
+PCRc        = (pi^2*ETi*Ic)/(Leffc^2)                 %lbf
+
+FSYieldc    = SigysTi/SigMaxc                         %FS Yield > 1.25
+FSUltimatec = SigutsTi/SigMaxc                        %FS Ultimate >1.5
+FSCBc       = SigCRc/SigMaxc                          %FS Cylindrical Buckling > 1.0
+FSEBc       = PCRc/ABlimit                            %FS Euler Buckling >1.0
+
+%% Design of Box Tube: Members BC and CE in Compression
+% "To do design Calculations, you may replace the section in Figure A1 by an
+% Equivalent Titanium Selection."
+Lb          = 232.974                                 %in
+kb          = 0.7;                                    %- Effective Length Constant
+Leffb       = Lb*kb;                                  %in
+tTi         = 0.12                                    %in
+tB          = tTi                                     %in
+bTi         = 7.526  %This value is the variable      %in 
+bB          = bTi-5*tTi                               %in
+ATi         = 4*bTi*tTi                               %in^2
+AB          = 4*bB*tB                                 %in^2
+Aeq         = (ETi*ATi+EB*AB)/ETi                     %in^2
+Ieq         = (2/3*ETi*tTi*bTi^3+EB*(1/2*tB*bB*(bTi...
+              +tTi+tB)^2+1/6*tB*bB^3))/ETi            %in^4
+beq         = sqrt(6*Ieq/Aeq)                         %in         
+teq         = Aeq/(4*sqrt(6*Ieq/Aeq))                 %in 
+WTib        = rhoTi*ATi*Lb                            %lbm
+WBb         = rhoB*AB*Lb                              %lbm
+Wb          = (rhoTi*ATi+rhoB*AB)*Lb                  %lbm
+dblimit     = ((BClimit*Lb)/(ETi*Aeq))*...
+              cos(34.51*pi/180)                       %in limit Deflection (converted degrees to radians)
+dbdesign    = ((BCdesign*Lb)/(ETi*Aeq))*...
+              cos(34.51*pi/180)                       %in design Deflection (converted degrees to radians)
+dbAllowable = 0.355;                                  %in
+SigMaxb     = BClimit/Aeq + 0                         %psi Max Stress (No Bending)
+kh          = 4;                                      %- Local Buckling Constant
+SigCRb      = kh*pi^2*ETi/(12*(1-nuTi^2))*(teq/beq)^2 %psi Local Buckling Stress
+gb          = 12;                                     %Number of Flanges
+SigCSb      = SigysTi*0.56*(((gb*teq^2)/Aeq)*sqrt(...
+              ETi/SigysTi))^0.85;                     %psi Crippling Stress
+SigCSMaxb   = 0.8*SigysTi;                            %psi Max Crippling Stress
+findminCS   = [SigCSb SigCSMaxb];                     %Both Crippling Stresses in array
+SigCSb      = min(findminCS);                         %psi Lower Valued Crippling Stress
+PCRb        = (pi^2*ETi*Ieq)/(Leffb^2);               %lbf
+
+FSYieldb    = SigysTi/SigMaxb                         %FS Yield > 1.25
+FSUltimateb = SigucsTi/SigMaxb                        %FS Ultimate >1.5
+FSMaxdefb   = BCdesign/BClimit                        %FS Max Deflection = 1.5
+FSLBb       = SigCRb/SigMaxb                          %FS Local Buckling > 1.0
+FSCb        = SigCSb/SigMaxb                          %FS Crippling > 1.0
+FSEBb       = PCRb/BClimit                            %FS Euler Buckling > 1.0
+
+%% Total Structure
+WeightTotal = (Wi + Wc + Wb)*2                        %lbm
+
+
