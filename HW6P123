@@ -1,0 +1,45 @@
+%Eric Zacharia
+%Design and Analysis of Aerospace Structures
+% Homework 6 - Probelms 1,2, and 3
+%Due November 16th, 2015
+clear all
+close all
+clc
+ 
+P       = 10000;                                % lbs
+L       = 120;                                  % in
+alpha   = [0 1 30]/57.3;                        % radians
+Iy      = 3.97;                                 % in^4
+Iz      = 37.04;                                % in^4
+Iyz     = -3.73;                                % in^4
+theta   = 0.5*atan2(2*Iyz,Iz-Iy);               % radians
+Im      = (Iy+Iz)/2+(Iy-Iz)/2*cos... 
+          (2*theta)-Iyz*sin(2*theta)            % in^4 
+In      = (Iy+Iz)/2-(Iy-Iz)/2*cos... 
+          (2*theta)+Iyz*sin(2*theta)            % in^4 
+Mz      = -P*cos(alpha)*L;                      % lbft
+My      =  P*sin(alpha)*L;                      % lbft
+Mm      = Mz*sin(theta)+My*cos(theta);          % lbft
+Mn      = Mz*cos(theta)+My*sin(theta);          % lbft
+
+pointA  = [0  4.0922  1.1537];                        % in [x,y,z]
+mA      =  pointA(2)*cos(theta)+pointA(3)*sin(theta); % in
+nA      = -pointA(2)*sin(theta)+pointA(3)*cos(theta); % in  
+SigxA   = Mm*nA/Im-Mn*mA/In                           % psi
+
+pointB  = [0  4.0922 -0.8463];                        % in [x,y,z]
+mB      =  pointB(2)*cos(theta)+pointB(3)*sin(theta); % in   
+nB      = -pointB(2)*sin(theta)+pointB(3)*cos(theta); % in  
+SigxB   = Mm*nB/Im-Mn*mB/In                           % psi
+
+pointC  = [0 -3.9078 -0.8463];                        % in [x,y,z]
+mC      =  pointC(2)*cos(theta)+pointC(3)*sin(theta); % in  
+nC      = -pointC(2)*sin(theta)+pointC(3)*cos(theta); % in
+SigxC   = Mm*nC/Im-Mn*mC/In                           % psi
+
+pointD  = [0 -3.9078  3.1537];                        % in [x,y,z]
+mD      =  pointD(2)*cos(theta)+pointD(3)*sin(theta); % in
+nD      = -pointD(2)*sin(theta)+pointD(3)*cos(theta); % in
+SigxD   = Mm*nD/Im-Mn*mD/In                           % psi
+
+
