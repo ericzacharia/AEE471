@@ -1,0 +1,342 @@
+%Eric Zacharia
+%Design and Analysis of Aerospace Structures
+%Project 2 - Design of an Aircraft Main Wing Spar
+%Due December 2nd, 2015
+clear all
+close all
+clc
+
+%% Variables and Constants
+L         = 120;                         % in (length)
+x         = L*linspace(0.0,1.0,11);      % in (each location)
+h         =   linspace(4.000,8.000,11)   % 4.00 < h  < 8.00 in (height ibeam)
+bf        =   linspace(1.500,3.000,11)   % 1.50 < b  < 3.00 in (depth flange)
+B         =   bf*2
+tf        =   linspace(.135,0.7662,11)   % 0.135< tf        in (thickness flange)
+tw        =   linspace(.135,0.7662,11)   % 0.135< tf        in (thickness web)
+bw        = h-2*tf;                      %    0 < bw        in (length web)                  
+bf_bw     = bf./bw                       % bf/bw <=1
+for bf_bw = bf./bw                       % bf/bw <=1
+if bf_bw  > 1
+    msg   = 'bf/bw must be less <= 1.';
+    error(msg);
+elseif bf_bw < 0
+    msg   = 'bf/bw must be <= 1.';
+    error(msg);
+end
+end
+tw_tfmin  = tw./tf                       % 0.50 < tw/tf < 2.0 
+for tw_tf = tw./tf                       % 0.50 < tw/tf < 2.0 
+if tw_tf  > 2
+    msg   = 'tw/tf must be 0.50 < tw/tf < 2.0.';
+    error(msg);
+elseif tw_tf < 0.5
+    msg   = 'tw/tf must be 0.50 < tw/tf < 2.0.';
+    error(msg);
+end
+end
+kw      = [3.6 3.5 3.5 3.4 3.4 3.3...
+           3.3 3.2 3.2 3.1 3.1]          % Varies with bf/bw and tw/tf (LB Parameter)
+g       = 7;                             % Number of Flanges
+E       = 10E6;                          % psi Young's Modulus
+nu      = 0.33;                          % Poisson's Ratio
+rho     = 0.098;                         % lb/in^3 Density
+SigUTS  = 33E3                           % psi Ultimate Tensile Strength
+SigYTS  = 28E3                           % psi Yield    Tensile Strength
+SigUCS  = SigUTS                         % psi Ultimate Compressive Strength
+SigYCS  = 30E3                           % psi Yield    Compressive Strength
+c       = h/2;                           % in Edge Distance
+Leff    = 2*L;                           % in Effective Length for cantilever beam
+A       = 4.*bf.*tf+h.*tw-2.*tw.*tf      % in^2 Area
+for A   = 4.*bf.*tf+h.*tw-2.*tw.*tf      % in^2 Area
+if  A   > 20
+    msg = 'A must be less than 20.';
+    error(msg);
+    end
+end
+I       = 1/12.*tw.*(bw).^3+2.*(1/...
+          12.*2.*bf.*tf.^3+2.*bf.*tf...
+          .*((h-tf)./2).^2)              % in^4 Second Moment of Inertia
+
+
+
+%% Expected DESIGN Load Spectrum for a Single Flight
+alpha       = 10;        % -
+% Take-off
+rmaxTO      = 55;        % lb/in
+rminTO      = 26;        % lb/in
+smaxTO      = 48;        % lb/in
+sminTO      = 18;        % lb/in
+nTO         = alpha;     % Number of Cycles
+% Maneuver - type 1
+rmaxman1    = 58;        % lb/in
+rminman1    = 24;        % lb/in
+smaxman1    = 48;        % lb/in
+sminman1    = 12;        % lb/in
+nman1       = 50*alpha;  % Number of Cycles
+% Maneuver - type 2
+rmaxman2    = 60;        % lb/in
+rminman2    = 20;        % lb/in
+smaxman2    = 50;        % lb/in
+sminman2    = 15;        % lb/in
+nman2       = 5*alpha;   % Number of Cycles
+% Cruise                  
+rmaxcruise  = 51.6;      % lb/in
+rmincruise  = 34.4;      % lb/in
+smaxcruise  = 46.8;      % lb/in
+smincruise  = 31.2;      % lb/in
+ncruise     = 500*alpha; % Number of Cycles
+% Landing - flare       
+rmaxLf      = 55;        % lb/in
+rminLf      = 26;        % lb/in
+smaxLf      = 48;        % lb/in
+sminLf      = 18;        % lb/in
+nLf         = alpha;     % Number of Cycles
+% Landing - touchdown    
+rmaxL       = 5;         % lb/in
+rminL       = -40;       % lb/in
+smaxL       = 2;         % lb/in
+sminL       = -30;       % lb/in
+nL          = 2*alpha;   % Number of Cycles
+
+%% Calculated Values for Take-off
+MmaxTO       = x.^2/2.*(rmaxTO+smaxTO/3);        % lbin Max Moment
+MminTO       = x.^2/2.*(rminTO+sminTO/3);        % lbin Min Moment
+SigMaxTO     = MmaxTO.*c./I;                     % psi Max Stress (No Axial)
+SigMinTO     = MminTO.*c./I;                     % psi Min Stress (No Axial)
+SigMeanTO    = (SigMaxTO+SigMinTO)/2;            % psi Mean Stress
+SigaTO       = (SigMaxTO-SigMinTO)/2;            % psi a Stress
+RTO          = SigMinTO./SigMaxTO;               % Stress Ratio
+SeqTOt       = 1.5*SigMaxTO./1000.*(1-RTO).^0.63;% psi (divided by 1000 for psi -> ksi)
+SeqTOc       = 1.5*SigMinTO./1000.*(1-RTO).^0.63;% psi (divided by 1000 for psi -> ksi)
+NTOt         = 10.^(20.68-9.84.*log10(SeqTOt));  % Number of Cycles (Equation)
+NTOc         = 10.^(20.68-9.84.*log10(SeqTOc));  % Number of Cycles (Equation)
+
+
+%% Calculated Values for Maneuver - type 1
+Mmaxman1    = x.^2/2*(rmaxman1+smaxman1/3);         % lbin Max Moment
+Mminman1    = x.^2/2*(rminman1+sminman1/3);         % lbin Min Moment
+SigMaxman1  = Mmaxman1.*c./I;                       % psi Max Stress (No Axial)
+SigMinman1  = Mminman1.*c./I;                       % psi Min Stress (No Axial)
+SigMeanman1 = (SigMaxman1+SigMinman1)/2;            % psi Mean Stress
+Sigaman1    = (SigMaxman1-SigMinman1)/2;            % psi a Stress
+Rman1       = SigMinman1./SigMaxman1;               % Stress Ratio
+Seqman1t    = 1.5*SigMaxman1./1000.*(1-Rman1).^0.63;% psi (divided by 1000 for psi -> ksi)
+Seqman1c    = 1.5*SigMinman1./1000.*(1-Rman1).^0.63;% psi (divided by 1000 for psi -> ksi)
+Nman1t      = 10.^(20.68-9.84.*log10(Seqman1t));    % Number of Cycles (Equation)
+Nman1c      = 10.^(20.68-9.84.*log10(Seqman1c));    % Number of Cycles (Equation)
+
+%% Calculated Values for Maneuver - type 2
+Mmaxman2    = x.^2/2*(rmaxman2+smaxman2/3);         % lbin Max Moment
+Mminman2    = x.^2/2*(rminman2+sminman2/3);         % lbin Min Moment
+SigMaxman2  = Mmaxman2.*c./I;                       % psi Max Stress (No Axial)
+SigMinman2  = Mminman2.*c./I;                       % psi Min Stress (No Axial)
+SigMeanman2 = (SigMaxman2+SigMinman2)/2;            % psi Mean Stress
+Sigaman2    = (SigMaxman2-SigMinman2)/2;            % psi a Stress
+Rman2       = SigMinman2./SigMaxman2;               % Stress Ratio
+Seqman2t    = 1.5*SigMaxman2./1000.*(1-Rman2).^0.63;% psi (divided by 1000 for psi -> ksi)
+Seqman2c    = 1.5*SigMinman2./1000.*(1-Rman2).^0.63;% psi (divided by 1000 for psi -> ksi)
+Nman2t      = 10.^(20.68-9.84.*log10(Seqman2t));    % Number of Cycles (Equation)
+Nman2c      = 10.^(20.68-9.84.*log10(Seqman2c));    % Number of Cycles (Equation)
+
+%% Calculated Values for Cruise
+Mmaxcruise    = x.^2/2*(rmaxcruise+smaxcruise/3);         % lbin Max Moment
+Mmincruise    = x.^2/2*(rmincruise+smincruise/3);         % lbin Min Moment
+SigMaxcruise  = Mmaxcruise.*c./I;                         % psi Max Stress (No Axial)
+SigMincruise  = Mmincruise.*c./I;                         % psi Min Stress (No Axial)
+SigMeancruise = (SigMaxcruise+SigMincruise)/2;            % psi Mean Stress
+Sigacruise    = (SigMaxcruise-SigMincruise)/2;            % psi a Stress
+Rcruise       = SigMincruise./SigMaxcruise;               % Stress Ratio
+Seqcruiset    = 1.5*SigMaxcruise./1000.*(1-Rcruise).^0.63;% psi (divided by 1000 for psi -> ksi)
+Seqcruisec    = 1.5*SigMincruise./1000.*(1-Rcruise).^0.63;% psi (divided by 1000 for psi -> ksi)
+Ncruiset      = 10.^(20.68-9.84.*log10(Seqcruiset));      % Number of Cycles (Equation)
+Ncruisec      = 10.^(20.68-9.84.*log10(Seqcruisec));      % Number of Cycles (Equation)
+
+%% Calculated Values for Landing - flare
+MmaxLf    = x.^2/2*(rmaxLf+smaxLf/3);               % lbin Max Moment
+MminLf    = x.^2/2*(rminLf+sminLf/3);               % lbin Min Moment
+SigMaxLf  = MmaxLf.*c./I;                           % psi Max Stress (No Axial)
+SigMinLf  = MminLf.*c./I;                           % psi Min Stress (No Axial)
+SigMeanLf = (SigMaxLf+SigMinLf)/2;                  % psi Mean Stress
+SigaLf    = (SigMaxLf-SigMinLf)/2;                  % psi a Stress
+RLf       = SigMinLf./SigMaxLf;                     % Stress Ratio
+SeqLft    = 1.5*SigMaxLf./1000.*(1-RLf).^0.63;      % psi (divided by 1000 for psi -> ksi)
+SeqLfc    = 1.5*SigMinLf./1000.*(1-RLf).^0.63;      % psi (divided by 1000 for psi -> ksi)
+NLft      = 10.^(20.68-9.84.*log10(SeqLft));        % Number of Cycles (Equation)
+NLfc      = 10.^(20.68-9.84.*log10(SeqLfc));        % Number of Cycles (Equation)
+
+%% Calculated Values for Landing - touchdown
+MmaxL    = x.^2/2*(rmaxL+smaxL/3);                  % lbin Max Moment
+MminL    = x.^2/2*(rminL+sminL/3);                  % lbin Min Moment
+SigMaxL  = MmaxL.*c./I;                             % psi Max Stress (No Axial)
+SigMinL  = MminL.*c./I;                             % psi Min Stress (No Axial)
+SigMeanL = (SigMaxL+SigMinL)/2;                     % psi Mean Stress
+SigaL    = (SigMaxL-SigMinL)/2;                     % psi a Stress
+RL       = SigMinL./SigMaxL;                        % Stress Ratio
+SeqLt    = abs(1.5*SigMinL)./1000.*(1-1./RL).^0.63; % psi (divided by 1000 for psi -> ksi)
+SeqLc    = abs(1.5*SigMaxL)./1000.*(1-1./RL).^0.63; % psi (divided by 1000 for psi -> ksi)
+NLt      = 10.^(20.68-9.84.*log10(SeqLt));          % Number of Cycles (Equation)
+NLc      = 10.^(20.68-9.84.*log10(SeqLc));          % Number of Cycles (Equation)
+
+%% Local Buckling and Crippling for ALL scenarios
+SigcrLB    = kw*pi^2*E/(12*(1-nu^2))*(tw/bw)^2  % psi Local Buckling Stress
+SigcrCR    = SigYCS.*0.67.*(((g.*tw.^2)./A).*...
+             sqrt(E./SigYCS)).^0.40;            % psi Crippling Stress
+SigcrCR    = SigcrCR(1:4);                      % Only first 4 values are under Max value
+SigcrCRMax = linspace(0.8*SigYCS,0.8*SigYCS,7); % psi Max Crippling Stress
+SigcrCR    = [SigcrCR SigcrCRMax]               % psi Actual Crippling Stress
+
+%% Factors of Safety for the Cross Section at the Fuselage 
+%FS is lowest at fuselage wall because moments are largest there.
+FSYldTOt     = SigYTS./SigMaxTO                 % FS Yield     > 1.25
+FSUltTOt     = SigUTS./SigMaxTO                 % FS Ultimate  > 1.50
+FSYldTOc     = SigYCS./SigMaxTO                 % FS Yield     > 1.25
+FSUltTOc     = SigUCS./SigMaxTO                 % FS Ultimate  > 1.50
+FSLBTO       = SigcrLB./SigMaxTO                % FS Local B   > 1.50
+FSCRTO       = SigcrCR./SigMaxTO                % FS Crippling > 1.50
+FSYldman1t   = SigYTS./SigMaxman1               % FS Yield     > 1.25
+FSUltman1t   = SigUTS./SigMaxman1               % FS Ultimate  > 1.50
+FSYldman1c   = SigYCS./SigMaxman1               % FS Yield     > 1.25
+FSUltman1c   = SigUCS./SigMaxman1               % FS Ultimate  > 1.50
+FSLBman1     = SigcrLB./SigMaxman1              % FS Local B   > 1.50
+FSCRman1     = SigcrCR./SigMaxman1              % FS Crippling > 1.50
+FSYldman2t   = SigYTS./SigMaxman2               % FS Yield     > 1.25
+FSUltman2t   = SigUTS./SigMaxman2               % FS Ultimate  > 1.50
+FSYldman2c   = SigYCS./SigMaxman2               % FS Yield     > 1.25
+FSUltman2c   = SigUCS./SigMaxman2               % FS Ultimate  > 1.50
+FSLBman2     = SigcrLB./SigMaxman2              % FS Local B   > 1.50
+FSCRman2     = SigcrCR./SigMaxman2              % FS Crippling > 1.50
+FSYldcruiset = SigYTS./SigMaxcruise             % FS Yield     > 1.25
+FSUltcruiset = SigUTS./SigMaxcruise             % FS Ultimate  > 1.50
+FSYldcruisec = SigYCS./SigMaxcruise             % FS Yield     > 1.25
+FSUltcruisec = SigUCS./SigMaxcruise             % FS Ultimate  > 1.50
+FSLBcruise   = SigcrLB./SigMaxcruise            % FS Local B   > 1.50
+FSCRcruise   = SigcrCR./SigMaxcruise            % FS Crippling > 1.50
+FSYldLft     = SigYTS./SigMaxLf                 % FS Yield     > 1.25
+FSUltLft     = SigUTS./SigMaxLf                 % FS Ultimate  > 1.50
+FSYldLfc     = SigYCS./SigMaxLf                 % FS Yield     > 1.25
+FSUltLfc     = SigUCS./SigMaxLf                 % FS Ultimate  > 1.50
+FSLBLf       = SigcrLB./SigMaxLf                % FS Local B   > 1.50
+FSCRLf       = SigcrCR./SigMaxLf                % FS Crippling > 1.50
+FSYldLt      = SigYTS./abs(SigMinL)             % FS Yield     > 1.25
+FSUltLt      = SigUTS./abs(SigMinL)             % FS Ultimate  > 1.50
+FSYldLc      = SigYCS./abs(SigMinL)             % FS Yield     > 1.25
+FSUltLc      = SigUCS./abs(SigMinL)             % FS Ultimate  > 1.50
+FSLBL        = SigcrLB./abs(SigMinL)            % FS Local B   > 1.50
+FSCRL        = SigcrCR./abs(SigMinL)            % FS Crippling > 1.50  
+
+%% Fatigue
+%tension
+Dt               = nTO./NTOt + nman1./Nman1t...
+                 + nman2./Nman2t + ncruise./Ncruiset...
+                 + nLf./NLft+nL./NLt;                % -
+Noperationst     = 1./Dt;                            % Number of Operations (Design to be about 10k)
+SFNoperationst   = Noperationst/4;                   % Number of Operations after SF
+SFNoperations1t  = SFNoperationst(1)
+SFNoperations2t  = SFNoperationst(2)
+SFNoperations3t  = SFNoperationst(3)
+SFNoperations4t  = SFNoperationst(4)
+SFNoperations5t  = SFNoperationst(5)
+SFNoperations6t  = SFNoperationst(6)
+SFNoperations7t  = SFNoperationst(7)
+SFNoperations8t  = SFNoperationst(8)
+SFNoperations9t  = SFNoperationst(9)
+SFNoperations10t = SFNoperationst(10)
+SFNoperations11t = SFNoperationst(11)
+%compression
+Dc               = nTO./NTOc + nman1./Nman1c...
+                 + nman2./Nman2c + ncruise./Ncruisec...
+                 + nLf./NLfc+nL./NLc;                % -
+Noperationsc     = 1./Dc;                            % Number of Operations (Design to be about 10k)
+SFNoperationsc   = Noperationsc/4;                   % Number of Operations after SF
+SFNoperations1c  = SFNoperationsc(1)
+SFNoperations2c  = SFNoperationsc(2)
+SFNoperations3c  = SFNoperationsc(3)
+SFNoperations4c  = SFNoperationsc(4)
+SFNoperations5c  = SFNoperationsc(5)
+SFNoperations6c  = SFNoperationsc(6)
+SFNoperations7c  = SFNoperationsc(7)
+SFNoperations8c  = SFNoperationsc(8)
+SFNoperations9c  = SFNoperationsc(9)
+SFNoperations10c = SFNoperationsc(10)
+SFNoperations11c = SFNoperationsc(11)
+% Total Weight for ONE tapered wing
+% Each 12 inch section is multiplied by density and its own cross sectional area.
+A             = [4.*bf.*tf+h.*tw-2.*tw.*tf]
+W             = [(A(2 )+A(1 ))/2 + (A(3)+A(2))/2 + (A(4 )+A(3))/2 + ...
+                 (A(5 )+A(4 ))/2 + (A(6)+A(5))/2 + (A(7 )+A(6))/2 + ...
+                 (A(8 )+A(7 ))/2 + (A(9)+A(8))/2 + (A(10)+A(9))/2 + ...
+                 (A(11)+A(10))/2]*rho*12        % lb Weight
+       
+%% Plot of Moment of Inertia vs. x location
+%Coefficients for 4th Order Polynomial fit line:
+y  = 5.7629e-08*x.^4+2.4622e-05...
+    *x.^3+0.0037099*x.^2+0.22063...
+    *x+3.61; % This is nearly identical to I, which means it is correct.
+
+
+figure(1)
+hold on
+plot(x,I,'bo')
+plot(x,y,'g')
+xlabel('Location, x, along spar (in)')
+ylabel('Second Moment of Inertia (in^4)')
+title('Second Moment of Inertia vs x Location')
+legend('Design Data','Polynomial Fit, y=5.7629e-08x^4+2.4622e-05x^3+0.0037099x^2+0.22063x+3.61')
+
+%% Integration of the Classical Beam Theory Equations
+% Used Wolfram Alpha for the intergration process.
+% The Maneuver - type 2 design loads were used to calculate the integral.
+% Design loads are attained by multiplying limit loads by 1.5.
+
+rmax_design  = 60*1.5;
+smax_design  = 50*1.5;
+
+% C1    = 0.216108*atan(7.53473+0.0565242*L)...
+%       + 0.0336834*log10(25.6647+L)...
+%       - 35.1043*log10(134.984+L)...
+%       + 17.5353*log10(18082.1+266.602*L+L^2);
+%   
+% dv_dx = 0.216108*atan(7.53473+0.0565242*x)...
+%       + 0.0336834*log10(25.6647+x)...
+%       - 35.1043*log10(134.984+x)...
+%       + 17.5353*log10(18082.1+266.602*x+x^2)...
+%       + C1;
+
+L     = linspace(120,120,11);                         % in (length)
+ 
+C2    = (0.00260577.*L+0.216.*L.*atan(7.534+0.056.*L)+301.851...
+      .*atan(6.70896+0.0504433.*L)+29.0443.*atan(7.53+0.056.*L)...
+      +0.216.*L.*atan(7.53+0.056.*L)+0.014766.*L.*log10(25.66+L)-...
+      15.2437.*L.*log10(135+L)+7.61318.*L.*log10(1808+266.602.*L+L.^2)...
+      +0.37801.*log10(25.6+L)+0.014766.*L.*log10(25.6+L)-2042.66.*...
+      log10(134+L)-15.2437.*L.*log10(134+L)+1012.55.*log10(18082+266.*L+L.^2)...
+      +7.61318.*L.*log10(1+26.*L+L.^2)-1.92857.*log10(1839+...
+      268.929.*L+1.*L.^2))*0.10035+11.77205;
+  
+v     = (0.00260577.*x+0.216.*x.*atan(7.534+0.056.*L)+301.851.*...
+      atan(6.70896+0.0504433.*x)+29.0443.*atan(7.53+0.056.*x)...
+      +0.216.*x.*atan(7.53+0.056.*x)+0.014766.*x.*log10(25.66+L)...
+      -15.2437.*x.*log10(135+L)+7.61318.*x.*log10(1808+266.602...
+      .*L+L.^2)+0.37801.*log10(25.6+x)+0.014766.*x.*log10(25.6+x)...
+      -2042.66.*log10(134+x)-15.2437.*x.*log10(134+x)+1012.55.*...
+      log10(18082+266.*x+x.^2)+7.61318.*x.*log10(1+26.*x+x.^2)...
+      -1.92857.*log10(1839+268.929.*x+1.*x.^2))*0.10035+11.77205 ...
+      + C2
+
+figure(2)
+hold on
+plot(x,v,'ro-')
+axis([0 120 -30 90])
+grid on
+xlabel('Location, x, along spar (in)')
+ylabel('Wing Deflection (in)')
+title('Wing Deflection Along the Length of the Wing Spar')
+legend('Wing Deflection')
+
+  
+  
+  
+  
+  
+  
