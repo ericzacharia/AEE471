@@ -122,4 +122,3 @@ FSEBb       = PCRb/BClimit                            %FS Euler Buckling > 1.0
 %% Total Structure
 WeightTotal = (Wi + Wc + Wb)*2                        %lbm
 
-
